@@ -45,7 +45,6 @@ await test('gql-mutations', async (t) => {
         profileDto: genCreateProfileDto(user1.id, MemberTypeId.BUSINESS),
       },
     });
-
     const { body: foundCreatedPost } = await getPost(app, data.createPost.id);
     const { body: foundCreatedUser } = await getUser(app, data.createUser.id);
     const { body: foundCreatedProfile } = await getProfile(app, data.createProfile.id);
@@ -199,7 +198,7 @@ await test('gql-mutations', async (t) => {
 
     const { body: subscribedToUser2 } = await subscribedToUser(app, user2.id);
     const { body: subscribedToUser4 } = await subscribedToUser(app, user4.id);
-
+    console.log(errors, 789);
     t.ok(!errors);
     t.ok(subscribedToUser2[0].id === user1.id);
     t.ok(subscribedToUser4.length === 0);
