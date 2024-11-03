@@ -15,6 +15,7 @@ import {
   ResolveTree,
   simplifyParsedResolveInfoFragmentWithType,
 } from 'graphql-parse-resolve-info';
+import { User } from '@prisma/client';
 
 export const Query = new GraphQLObjectType({
   name: 'Query',
@@ -27,17 +28,16 @@ export const Query = new GraphQLObjectType({
           resolveTree,
           info.returnType,
         );
-        const include: { subscribedToUser?: boolean; userSubscribedTo?: boolean } = {};
+        const include = {
+          userSubscribedTo: 'userSubscribedTo' in fields,
+          subscribedToUser: 'subscribedToUser' in fields,
+        };
 
-        if ('subscribedToUser' in fields) {
-          include.subscribedToUser = true;
-        }
+        const users: User[] = await context.prisma.user.findMany({
+          include,
+        });
 
-        if ('userSubscribedTo' in fields) {
-          include.userSubscribedTo = true;
-        }
-
-        return await context.prisma.user.findMany({ include });
+        return users;
       },
     },
 

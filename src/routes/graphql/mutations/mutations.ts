@@ -1,4 +1,9 @@
-import { GraphQLBoolean, GraphQLNonNull, GraphQLObjectType } from 'graphql';
+import {
+  GraphQLBoolean,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLString,
+} from 'graphql';
 import { UUIDType } from '../types/uuid.js';
 import {
   CreatePostInput,
@@ -95,41 +100,45 @@ export const Mutation = new GraphQLObjectType({
       },
     },
     subscribeTo: {
-      type: UserType,
+      type: new GraphQLNonNull(GraphQLString),
       args: {
         userId: { type: new GraphQLNonNull(UUIDType) },
         authorId: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (
         _,
-        { userId, authorId }: { userId: string; authorId: string },
+        args: { userId: string; authorId: string },
         context: GqlContext,
       ) => {
+        const { userId: subscriberId, authorId } = args;
         await context.prisma.subscribersOnAuthors.create({
           data: {
-            subscriberId: userId,
+            subscriberId: subscriberId,
             authorId: authorId,
           },
         });
-        return context.prisma.user.findUnique({
-          where: { id: userId },
-        });
+        return 'done';
       },
     },
+
     unsubscribeFrom: {
       type: GraphQLBoolean,
       args: {
-        userId: { type: new GraphQLNonNull(UUIDType) },
-        authorId: { type: new GraphQLNonNull(UUIDType) },
+        userId: { type: UUIDType },
+        authorId: { type: UUIDType },
       },
       resolve: async (
         _,
-        { userId, authorId }: { userId: string; authorId: string },
+        args: { userId: string; authorId: string },
         context: GqlContext,
       ) => {
+        const { userId: subscriberId, authorId } = args;
         await context.prisma.subscribersOnAuthors.delete({
           where: {
-            subscriberId_authorId: { subscriberId: userId, authorId },
+            subscriberId_authorId: {
+              subscriberId,
+              authorId,
+            },
           },
         });
         return true;

@@ -6,9 +6,10 @@ import {
   GraphQLInt,
   GraphQLBoolean,
   GraphQLList,
+  GraphQLNonNull,
 } from 'graphql';
 import { UUIDType } from './uuid.js';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 
 export const PostType = new GraphQLObjectType({
   name: 'Post',
@@ -34,7 +35,6 @@ export const UserType: GraphQLObjectType<{ id: string }, GqlContext> =
       profile: {
         type: ProfileType,
         resolve: async (parent: { id: string }, _, context: GqlContext) => {
-          // Получение профиля пользователя через Prisma
           return await context.prisma.profile.findUnique({
             where: { userId: parent.id },
           });
@@ -43,28 +43,29 @@ export const UserType: GraphQLObjectType<{ id: string }, GqlContext> =
       posts: {
         type: new GraphQLList(PostType),
         resolve: async (parent: { id: string }, _, context: GqlContext) => {
-          // Получение постов пользователя через Prisma
           return await context.prisma.post.findMany({
             where: { authorId: parent.id },
           });
         },
       },
       userSubscribedTo: {
-        type: new GraphQLList(UserType),
-        resolve: async (parent: { id: string }, _, context: GqlContext) => {
-          // Получение пользователей, на которых подписан данный пользователь через Prisma
-          const subscriptions = await context.prisma.subscribersOnAuthors.findMany({
-            where: { subscriberId: parent.id },
-            include: { author: true },
+        type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
+        resolve: (parent, _args, { prisma }) => {
+          return prisma.user.findMany({
+            where: {
+              subscribedToUser: {
+                some: {
+                  subscriberId: parent.id,
+                },
+              },
+            },
           });
-          return subscriptions.map((sub) => sub.author);
         },
       },
       subscribedToUser: {
-        type: new GraphQLList(UserType),
-        resolve: async (parent: { id: string }, _, context: GqlContext) => {
-          // Получение пользователей, которые подписаны на данного пользователя через Prisma
-          const subscribers = await context.prisma.user.findMany({
+        type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
+        resolve: (parent, _args, { prisma }) => {
+          return prisma.user.findMany({
             where: {
               userSubscribedTo: {
                 some: {
@@ -73,7 +74,6 @@ export const UserType: GraphQLObjectType<{ id: string }, GqlContext> =
               },
             },
           });
-          return subscribers;
         },
       },
     }),
@@ -134,4 +134,48 @@ export interface ICreatePost {
 export interface ICreateUser {
   name: string;
   balance: number;
+}
+
+export interface UserSubscriptions extends User {
+  userSubscribedTo?: {
+    subscriberId: string;
+    authorId: string;
+  }[];
+  subscribedToUser?: {
+    subscriberId: string;
+    authorId: string;
+  }[];
+}
+interface ISubscriptions {
+  subscriberId: string;
+  authorId: string;
+}
+
+export interface IUser {
+  id: string;
+  name: string;
+  balance: number;
+  profile?: IProfile;
+  posts?: IPost[];
+  userSubscribedTo: ISubscriptions[];
+  subscribedToUser: ISubscriptions[];
+}
+
+interface IProfile {
+  id: string;
+  isMale: boolean;
+  yearOfBirth: number;
+  memberType: IMemberType;
+}
+
+interface IMemberType {
+  id: MemberTypeIdType;
+  discount: number;
+  postsLimitPerMonth: number;
+}
+
+interface IPost {
+  id: string;
+  title: string;
+  content: string;
 }
