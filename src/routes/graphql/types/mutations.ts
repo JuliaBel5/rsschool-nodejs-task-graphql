@@ -4,7 +4,7 @@ import {
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql';
-import { UUIDType } from '../types/uuid.js';
+import { UUIDType } from './uuid.js';
 import {
   CreatePostInput,
   CreateUserInput,
@@ -12,7 +12,7 @@ import {
   ChangePostInput,
   ChangeUserInput,
   ChangeProfileInput,
-} from '../types/inputs.js';
+} from './inputs.js';
 import {
   PostType,
   UserType,
@@ -21,7 +21,7 @@ import {
   ICreatePost,
   ICreateUser,
   ICreateProfile,
-} from '../types/types.js';
+} from './types.js';
 
 export const Mutation = new GraphQLObjectType({
   name: 'Mutation',

@@ -16,6 +16,7 @@ import {
   simplifyParsedResolveInfoFragmentWithType,
 } from 'graphql-parse-resolve-info';
 import { User } from '@prisma/client';
+import { UUID } from 'crypto';
 
 export const Query = new GraphQLObjectType({
   name: 'Query',
@@ -37,6 +38,10 @@ export const Query = new GraphQLObjectType({
           include,
         });
 
+        users.forEach((user) => {
+          context.loaders.userLoader.prime(user.id as UUID, user);
+        });
+
         return users;
       },
     },
@@ -47,9 +52,7 @@ export const Query = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_, { id: userId }: { id: string }, context: GqlContext) => {
-        return await context.prisma.user.findUnique({
-          where: { id: userId },
-        });
+        return await context.loaders.userLoader.load(userId);
       },
     },
 
@@ -66,9 +69,7 @@ export const Query = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_, { id: profileId }: { id: string }, context: GqlContext) => {
-        return await context.prisma.profile.findUnique({
-          where: { id: profileId },
-        });
+        return context.loaders.profileIdLoader.load(profileId);
       },
     },
 
@@ -85,15 +86,13 @@ export const Query = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_, { id: postId }: { id: string }, context: GqlContext) => {
-        return context.prisma.post.findUnique({
-          where: { id: postId },
-        });
+        return await context.loaders.postLoader.load(postId);
       },
     },
 
     memberTypes: {
       type: new GraphQLList(MemberType),
-      resolve: async (_, __, context: GqlContext) => {
+      resolve: async (_, args, context: GqlContext) => {
         return await context.prisma.memberType.findMany();
       },
     },
@@ -108,11 +107,7 @@ export const Query = new GraphQLObjectType({
         { id: MemberTypeIdType }: { id: MemberTypeIdType },
         context: GqlContext,
       ) => {
-        return await context.prisma.memberType.findUnique({
-          where: {
-            id: MemberTypeIdType,
-          },
-        });
+        return await context.loaders.membersLoader.load(MemberTypeIdType);
       },
     },
   },

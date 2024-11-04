@@ -1,7 +1,7 @@
 import { Type } from '@fastify/type-provider-typebox';
 import { GraphQLSchema } from 'graphql';
 
-import { Mutation } from './mutations/mutations.js';
+import { Mutation } from './types/mutations.js';
 import { Query } from './queries.js';
 
 export const gqlResponseSchema = Type.Partial(

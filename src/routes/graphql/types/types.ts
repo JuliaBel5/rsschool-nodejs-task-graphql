@@ -9,7 +9,14 @@ import {
   GraphQLNonNull,
 } from 'graphql';
 import { UUIDType } from './uuid.js';
-import { PrismaClient, User } from '@prisma/client';
+import {
+  MemberType as PrismaMemberType,
+  PrismaClient,
+  Profile,
+  User,
+  Post,
+} from '@prisma/client';
+import DataLoader from 'dataloader';
 
 export const PostType = new GraphQLObjectType({
   name: 'Post',
@@ -21,63 +28,61 @@ export const PostType = new GraphQLObjectType({
   }),
 });
 
-export type GqlContext = {
-  prisma: PrismaClient;
+type Loaders = {
+  userLoader: DataLoader<string, User>;
+  profileLoader: DataLoader<string, Profile>;
+  profileIdLoader: DataLoader<string, Profile>;
+  membersLoader: DataLoader<string, PrismaMemberType>;
+  postsLoader: DataLoader<string, Post>;
+  postLoader: DataLoader<string, Post>;
+  subscribedToUserLoader: DataLoader<string, PrismaMemberType>;
+  userSubscribedToLoader: DataLoader<string, PrismaMemberType>;
 };
 
-export const UserType: GraphQLObjectType<{ id: string }, GqlContext> =
-  new GraphQLObjectType({
-    name: 'User',
-    fields: () => ({
-      id: { type: UUIDType },
-      name: { type: GraphQLString },
-      balance: { type: GraphQLFloat },
-      profile: {
-        type: ProfileType,
-        resolve: async (parent: { id: string }, _, context: GqlContext) => {
-          return await context.prisma.profile.findUnique({
-            where: { userId: parent.id },
-          });
-        },
+export type GqlContext = {
+  prisma: PrismaClient;
+  loaders: Loaders;
+};
+
+export const UserType: GraphQLObjectType = new GraphQLObjectType({
+  name: 'User',
+  fields: () => ({
+    id: { type: UUIDType },
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
+    profile: {
+      type: ProfileType,
+      resolve: async (parent: IUser, _, context: GqlContext) => {
+        const result = await context.loaders.profileLoader.load(parent.id);
+        return result;
+        /* return await context.prisma.profile.findUnique({
+          where: { userId: parent.id },
+        });*/
       },
-      posts: {
-        type: new GraphQLList(PostType),
-        resolve: async (parent: { id: string }, _, context: GqlContext) => {
-          return await context.prisma.post.findMany({
-            where: { authorId: parent.id },
-          });
-        },
+    },
+    posts: {
+      type: new GraphQLList(PostType),
+      resolve: async (parent: IUser, _, context: GqlContext) => {
+        const result = await context.loaders.postsLoader.load(parent.id);
+        return result;
       },
-      userSubscribedTo: {
-        type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
-        resolve: (parent, _args, { prisma }) => {
-          return prisma.user.findMany({
-            where: {
-              subscribedToUser: {
-                some: {
-                  subscriberId: parent.id,
-                },
-              },
-            },
-          });
-        },
+    },
+    userSubscribedTo: {
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
+      resolve: async (parent: IUser, _args, context: GqlContext) => {
+        const userSubs = parent.userSubscribedTo || [];
+        return context.loaders.userLoader.loadMany(userSubs.map((s) => s.authorId));
       },
-      subscribedToUser: {
-        type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
-        resolve: (parent, _args, { prisma }) => {
-          return prisma.user.findMany({
-            where: {
-              userSubscribedTo: {
-                some: {
-                  authorId: parent.id,
-                },
-              },
-            },
-          });
-        },
+    },
+    subscribedToUser: {
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
+      resolve: async (parent: IUser, _args, context: GqlContext) => {
+        const subsToUser = parent.subscribedToUser || [];
+        return context.loaders.userLoader.loadMany(subsToUser.map((s) => s.subscriberId));
       },
-    }),
-  });
+    },
+  }),
+});
 
 export const MemberTypeId = new GraphQLEnumType({
   name: 'MemberTypeId',
