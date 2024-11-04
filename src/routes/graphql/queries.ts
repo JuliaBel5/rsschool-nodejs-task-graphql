@@ -104,10 +104,10 @@ export const Query = new GraphQLObjectType({
       },
       resolve: async (
         _,
-        { id: MemberTypeIdType }: { id: MemberTypeIdType },
+        { id: MemberTypeId }: { id: MemberTypeIdType },
         context: GqlContext,
       ) => {
-        return await context.loaders.membersLoader.load(MemberTypeIdType);
+        return await context.loaders.membersLoader.load(MemberTypeId);
       },
     },
   },

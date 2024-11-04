@@ -37,7 +37,6 @@ await test('gql-loader-prime', async (t) => {
     } = await getPrismaStats(app);
 
     t.ok(!errors);
-    console.log(afterHistory.length - beforeHistory.length, 654);
     t.ok(afterHistory.length - beforeHistory.length === 1);
 
     const history = afterHistory.slice(beforeHistory.length);
@@ -83,7 +82,6 @@ await test('gql-loader-prime', async (t) => {
       } = await getPrismaStats(app);
 
       t.ok(!errors);
-      console.log(afterHistory.length - beforeHistory.length, 987);
       t.ok(afterHistory.length - beforeHistory.length === 1);
 
       const history = afterHistory.slice(beforeHistory.length);

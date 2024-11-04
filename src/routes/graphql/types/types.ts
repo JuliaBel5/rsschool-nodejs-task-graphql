@@ -33,10 +33,9 @@ type Loaders = {
   profileLoader: DataLoader<string, Profile>;
   profileIdLoader: DataLoader<string, Profile>;
   membersLoader: DataLoader<string, PrismaMemberType>;
+  memberLoader: DataLoader<string, PrismaMemberType>;
   postsLoader: DataLoader<string, Post>;
   postLoader: DataLoader<string, Post>;
-  subscribedToUserLoader: DataLoader<string, PrismaMemberType>;
-  userSubscribedToLoader: DataLoader<string, PrismaMemberType>;
 };
 
 export type GqlContext = {
@@ -111,9 +110,7 @@ export const ProfileType = new GraphQLObjectType({
     memberType: {
       type: MemberType,
       resolve: async (parent: { memberTypeId: string }, _, context: GqlContext) => {
-        return await context.prisma.memberType.findUnique({
-          where: { id: parent.memberTypeId },
-        });
+        return await context.loaders.membersLoader.load(parent.memberTypeId);
       },
     },
   }),
