@@ -54,9 +54,6 @@ export const UserType: GraphQLObjectType = new GraphQLObjectType({
       resolve: async (parent: IUser, _, context: GqlContext) => {
         const result = await context.loaders.profileLoader.load(parent.id);
         return result;
-        /* return await context.prisma.profile.findUnique({
-          where: { userId: parent.id },
-        });*/
       },
     },
     posts: {

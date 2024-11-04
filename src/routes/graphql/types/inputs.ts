@@ -45,19 +45,18 @@ export const ChangePostInput = new GraphQLInputObjectType({
 export const CreateProfileInput = new GraphQLInputObjectType({
   name: 'CreateProfileInput',
   fields: {
-    userId: { type: new GraphQLNonNull(UUIDType) }, // ID пользователя
-    isMale: { type: new GraphQLNonNull(GraphQLBoolean) }, // Пол
-    yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) }, // Год рождения
-    memberTypeId: { type: new GraphQLNonNull(MemberTypeId) }, // ID типа участника
+    userId: { type: new GraphQLNonNull(UUIDType) },
+    isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
+    yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
+    memberTypeId: { type: new GraphQLNonNull(MemberTypeId) },
   },
 });
 
-// ChangeProfileInput - структура для изменения профиля
 export const ChangeProfileInput = new GraphQLInputObjectType({
   name: 'ChangeProfileInput',
   fields: {
-    isMale: { type: GraphQLBoolean }, // Пол, может быть опциональным
-    yearOfBirth: { type: GraphQLInt }, // Год рождения, может быть опциональным
-    memberTypeId: { type: MemberTypeId }, // ID типа участника, может быть опциональным
+    isMale: { type: GraphQLBoolean },
+    yearOfBirth: { type: GraphQLInt },
+    memberTypeId: { type: MemberTypeId },
   },
 });
